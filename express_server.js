@@ -17,9 +17,14 @@ app.get('/urls.json', (req, res) => {
   res.json(urlDatabase) // converts to JSON
 });
 
+app.get('/urls', (req, res) => {
+  const templateVars = { urls: urlDatabase };
+  res.render('urls_index', templateVars);
+});
+
 app.get('/hello', (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n")
-})
+  res.send("<html><body>Hello <b>World</b></body></html>\n");
+});
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
