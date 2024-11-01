@@ -51,7 +51,7 @@ app.post('/urls', (req, res) => {
   const newId = generateRandomID();
   const newLongURL = req.body.longURL;
   urlDatabase[newId] = newLongURL;
-  res.redirect(`${req.body.longURL}`)
+  res.redirect(`/urls/${newId}`)
 });
 
 // Dynamic route to display a specific URL's details based on the id provided
