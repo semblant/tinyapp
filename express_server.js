@@ -9,24 +9,30 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com",
 };
 
+
+// Root route, sends a plain text response "Hello World!" to the client
 app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
+// Route to return the urlDatabase as a JSON object
 app.get('/urls.json', (req, res) => {
-  res.json(urlDatabase) // converts to JSON
+  res.json(urlDatabase); // converts to JSON
 });
 
+// Route to display a list of URLs, renders an HTML template with url data
 app.get('/urls', (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render('urls_index', templateVars);
 });
 
+// Dynamic route to display a specific URL's details based on the id provided
 app.get('/urls/:id', (req, res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id]};
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
   res.render('urls_show', templateVars);
 });
 
+// Route that responds with HTML-formatted "Hello World!" content
 app.get('/hello', (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });

@@ -28,12 +28,14 @@
           </tr>
         </thead>
         <tbody>
-          <% for (let id in urls) { %>
-            <tr>
-              <td><%= id %></td>
-              <td><%= urls[id] %></td>
-            </tr>
-          <% } %>
+            <% for (let id in urls) { %>
+              <% if (urls[id]) { %>
+              <tr>
+                <td><%= id %></td>
+                <td><%= urls[id] %></td>
+              </tr>
+              <% } %>
+            <% } %>
         </tbody>
       </table>
     </main>
