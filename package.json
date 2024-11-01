@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/semblant/tinyapp/issues"
   },
-  "homepage": "https://github.com/semblant/tinyapp#readme"
+  "homepage": "https://github.com/semblant/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.21.1"
+  }
 }
