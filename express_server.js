@@ -47,11 +47,18 @@ app.get('/urls/new', (req, res) => {
   res.render('urls_new')
 });
 
+// Route to post a new URL and store the data in the database, then redirect to the specific URL for the ID
 app.post('/urls', (req, res) => {
   const newId = generateRandomID();
   const newLongURL = req.body.longURL;
   urlDatabase[newId] = newLongURL;
   res.redirect(`/urls/${newId}`)
+});
+
+// Route to redirect any shortURl (/u/:id) to its longURL
+app.get('/u/:id', (req, res) => {
+  const longURL = urlDatabase[req.params.id];
+  res.redirect(`${longURL}`);
 });
 
 // Dynamic route to display a specific URL's details based on the id provided
