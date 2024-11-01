@@ -67,6 +67,7 @@ app.get('/urls/:id', (req, res) => {
   res.render('urls_show', templateVars);
 });
 
+// Dynamic route to delete a URL from the database and redirect to the /urls page
 app.post('/urls/:id/delete', (req, res) => {
   const urlToDelete = req.params.id;
   delete urlDatabase[urlToDelete];
