@@ -13,7 +13,6 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com",
 };
 
-
 /**
  * Function generates a random URL ID
  *
@@ -76,11 +75,11 @@ app.post('/urls/:id/delete', (req, res) => {
   res.redirect('/urls')
 });
 
-// Dynamic route to update a URL
+// Dynamic route to update a URL and redirect to the URLs page
 app.post('/update', (req, res) => {
-  const currentID = req.body.currentID;
-  const updatedURL = req.body.newURL;
-  urlDatabase[currentID] = updatedURL;
+  const currentID = req.body.currentID; // Grab data from hidden form named 'currentID'
+  const updatedURL = req.body.newURL; // Grab data from form named 'newURL'
+  urlDatabase[currentID] = updatedURL; // update db
   res.redirect('/urls');
 });
 
