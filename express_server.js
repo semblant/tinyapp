@@ -1,10 +1,12 @@
 const express = require('express');
+const bodyParser = require('body-parser');
 const app = express();
 const PORT = 8080; // default port 8080
 
 app.set('view engine', 'ejs'); // set ejs as templating engine
 
 app.use(express.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
@@ -72,6 +74,14 @@ app.post('/urls/:id/delete', (req, res) => {
   const urlToDelete = req.params.id;
   delete urlDatabase[urlToDelete];
   res.redirect('/urls')
+});
+
+// Dynamic route to update a URL
+app.post('/update', (req, res) => {
+  const currentID = req.body.currentID;
+  const updatedURL = req.body.newURL;
+  urlDatabase[currentID] = updatedURL;
+  res.redirect('/urls');
 });
 
 app.listen(PORT, () => {

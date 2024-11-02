@@ -9,6 +9,7 @@
       crossorigin="anonymous"
     />
     <title>URL - TinyApp Example</title>
+
   </head>
 
   <body>
@@ -19,6 +20,15 @@
         <h5 class="card-title">TinyURL for: <%= longURL %></h5>
         <p class="card-text">
           Short URL ID: <a href="<%= longURL %>"><%= id %></a>
+        </p>
+        <p>
+          <hr>
+          <h4 color="grey">EDIT</h4>
+          <form id="edit" method="POST" action="/update">
+            <input id="editField" name="newURL" placeholder="http://">
+            <input type="hidden" id="currentID" name="currentID" value="<%= id %>">
+          <button type="submit">Submit</button>
+        </form>
         </p>
       </div>
       <div class="card-footer text-muted"></div>
