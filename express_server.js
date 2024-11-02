@@ -76,7 +76,7 @@ app.post('/urls/:id/delete', (req, res) => {
 });
 
 // Dynamic route to update a URL and redirect to the URLs page
-app.post('/update', (req, res) => {
+app.post('/urls/:id', (req, res) => {
   const currentID = req.body.currentID; // Grab data from hidden form named 'currentID'
   const updatedURL = req.body.newURL; // Grab data from form named 'newURL'
   urlDatabase[currentID] = updatedURL; // update db
