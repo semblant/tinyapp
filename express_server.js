@@ -80,7 +80,8 @@ app.post('/urls/:id', (req, res) => {
   const currentID = req.body.currentID; // Grab data from hidden form named 'currentID'
   const updatedURL = req.body.newURL; // Grab data from form named 'newURL'
   urlDatabase[currentID] = updatedURL; // update db
-  res.redirect('/urls');
+  const templateVars = { id: currentID, longURL: updatedURL };
+  res.render('urls_show', templateVars);
 });
 
 app.listen(PORT, () => {
