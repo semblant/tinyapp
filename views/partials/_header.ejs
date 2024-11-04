@@ -19,21 +19,21 @@
       </div>
     </div>
     <div class="login information">
-      <% if (username) { %>
-        <label for "username">Logged in as: <%= username %></label>
-        <form method="POST" action="/logout">
-          <button type="'submit">Logout</button>
+      <% if (!username) { %>
+        <form method="POST" action="/login">
+          <label for="username">Username</label>
+          <input
+            id="username"
+            name="username"
+            placeholder="username"
+          >
+          <button type="submit">Login</button>
         </form>
         <% } else { %>
-      <form method="POST" action="/login">
-        <label for="username">Username</label>
-        <input
-          id="username"
-          name="username"
-          placeholder="username"
-        >
-        <button type="submit">Login</button>
-      </form>
+          <label for "username">Logged in as: <%= username %></label>
+          <form method="POST" action="/logout">
+            <button type="'submit">Logout</button>
+          </form>
       <% } %>
     </div>
   </nav>

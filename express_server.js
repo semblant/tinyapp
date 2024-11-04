@@ -29,6 +29,24 @@ app.get('/', (req, res) => {
   res.redirect('/urls');
 });
 
+// Route to post username to login page then redirect to /urls
+app.post('/login', (req, res) => {
+  const username = req.body.username;
+  res.cookie('username', username);
+  res.redirect('/urls');
+});
+
+// Route to prompt user registration
+app.get('/register', (req, res) => {
+  res.render('register');
+});
+
+// Route to post a logout by clearing the username cookie and redirecting to /urls
+app.post('/logout', (req, res) => {
+  res.clearCookie('username');
+  res.redirect('/urls');
+});
+
 // Route to return the urlDatabase as a JSON object
 app.get('/urls.json', (req, res) => {
   res.json(urlDatabase); // converts to JSON
@@ -54,18 +72,6 @@ app.post('/urls', (req, res) => {
   res.redirect(`/urls/${newId}`);
 });
 
-// Route to post username to login page then redirect to /urls
-app.post('/login', (req, res) => {
-  const username = req.body.username;
-  res.cookie('username', username);
-  res.redirect('/urls');
-});
-
-// Route to post a logout by clearing the username cookie and redirecting to /urls
-app.post('/logout', (req, res) => {
-  res.clearCookie('username');
-  res.redirect('/urls');
-});
 
 // Route to redirect any shortURl (/u/:id) to its longURL
 app.get('/u/:id', (req, res) => {
