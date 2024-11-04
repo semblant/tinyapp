@@ -42,8 +42,8 @@ app.get('/urls', (req, res) => {
 
 // Route to create a new URL, renders an HTML template form to submit a new URL
 app.get('/urls/new', (req, res) => {
-  const templateVars = { username: req.cookies['username'] }
-  res.render('urls_new')
+  const templateVars = { username: req.cookies['username'] };
+  res.render('urls_new', templateVars);
 });
 
 // Route to post a new URL and store the data in the database, then redirect to the specific URL for the ID
@@ -51,14 +51,20 @@ app.post('/urls', (req, res) => {
   const newId = generateRandomID();
   const newLongURL = req.body.longURL;
   urlDatabase[newId] = newLongURL;
-  res.redirect(`/urls/${newId}`)
+  res.redirect(`/urls/${newId}`);
 });
 
 // Route to post username to login page then redirect to /urls
 app.post('/login', (req, res) => {
   const username = req.body.username;
   res.cookie('username', username);
-  res.redirect('/urls')
+  res.redirect('/urls');
+});
+
+// Route to post a logout by clearing the username cookie and redirecting to /urls
+app.post('/logout', (req, res) => {
+  res.clearCookie('username');
+  res.redirect('/urls');
 });
 
 // Route to redirect any shortURl (/u/:id) to its longURL
@@ -77,7 +83,7 @@ app.get('/urls/:id', (req, res) => {
 app.post('/urls/:id/delete', (req, res) => {
   const urlToDelete = req.params.id;
   delete urlDatabase[urlToDelete];
-  res.redirect('/urls')
+  res.redirect('/urls');
 });
 
 // Dynamic route to update a URL and redirect to the URLs page
@@ -91,4 +97,4 @@ app.post('/urls/:id', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-})
+});
