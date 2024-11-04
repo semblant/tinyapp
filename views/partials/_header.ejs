@@ -20,12 +20,13 @@
     </div>
     <div class="login information">
       <% if (username) { %>
-        <a>Logged in as: <%= username %></a>
+        <label for "username">Logged in as: <%= username %></label>
         <form method="POST" action="/logout">
           <button type="'submit">Logout</button>
         </form>
         <% } else { %>
       <form method="POST" action="/login">
+        <label for="username">Username</label>
         <input
           id="username"
           name="username"
