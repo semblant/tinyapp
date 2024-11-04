@@ -56,6 +56,13 @@ app.post('/urls', (req, res) => {
   res.redirect(`/urls/${newId}`)
 });
 
+// Route to login page, redirect to /urls
+app.post('/login', (req, res) => {
+  const username = req.body.username;
+  res.cookie('username', username);
+  res.redirect('/urls')
+});
+
 // Route to redirect any shortURl (/u/:id) to its longURL
 app.get('/u/:id', (req, res) => {
   const longURL = urlDatabase[req.params.id];
