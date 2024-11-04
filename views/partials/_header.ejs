@@ -19,6 +19,9 @@
       </div>
     </div>
     <div class="login information">
+      <% if (username) { %>
+        <a>Logged in as: <%= username %></a>
+        <% } else { %>
       <form method="POST" action="/login">
         <input
           id="username"
@@ -27,6 +30,7 @@
         >
           <button type="submit">Login</button>
       </form>
+      <% } %>
     </div>
   </nav>
 </header>
