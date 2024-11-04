@@ -29,16 +29,16 @@ app.get('/', (req, res) => {
   res.redirect('/urls');
 });
 
-// Route to post username to login page then redirect to /urls
-app.post('/login', (req, res) => {
-  const username = req.body.username;
-  res.cookie('username', username);
-  res.redirect('/urls');
-});
-
 // Route to prompt user registration
 app.get('/register', (req, res) => {
   res.render('register');
+});
+
+app.post('/register', (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  const templateVars = { email: email, password: password };
+
 });
 
 // Route to post a logout by clearing the username cookie and redirecting to /urls
