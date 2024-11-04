@@ -15,6 +15,10 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com",
 };
 
+const userDatabase = {};
+
+let loggedInFlag = false;
+
 /**
  * Function generates a random URL ID
  *
@@ -29,21 +33,41 @@ app.get('/', (req, res) => {
   res.redirect('/urls');
 });
 
+// Route to post username to login page then redirect to /urls
+app.post('/login', (req, res) => {
+  const userId = req.body.user_id;
+  res.cookie('user_id', userId);
+  res.redirect('/urls');
+});
+
 // Route to prompt user registration
 app.get('/register', (req, res) => {
   res.render('register');
 });
 
+// Route to post registration info of user into database and redirect to /urls
 app.post('/register', (req, res) => {
+  // Store user information
   const email = req.body.email;
   const password = req.body.password;
-  const templateVars = { email: email, password: password };
+  const randomUserId = generateRandomID();
 
+  // Set login flag as true
+  loggedInFlag = true;
+
+  // Add user information to the database
+  userDatabase[randomUserId] = { id: randomUserId, email: email, password: password };
+
+
+  // Set cookie to remember user ID
+  res.cookie('user_id', randomUserId);
+
+  res.redirect('/urls');
 });
 
 // Route to post a logout by clearing the username cookie and redirecting to /urls
 app.post('/logout', (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   res.redirect('/urls');
 });
 
@@ -54,13 +78,13 @@ app.get('/urls.json', (req, res) => {
 
 // Route to display a list of URLs, renders an HTML template with url data
 app.get('/urls', (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies['username'] };
+  const templateVars = { urls: urlDatabase, users: userDatabase };
   res.render('urls_index', templateVars);
 });
 
 // Route to create a new URL, renders an HTML template form to submit a new URL
 app.get('/urls/new', (req, res) => {
-  const templateVars = { username: req.cookies['username'] };
+  const templateVars = { users: userDatabase };
   res.render('urls_new', templateVars);
 });
 
@@ -81,7 +105,7 @@ app.get('/u/:id', (req, res) => {
 
 // Dynamic route to display a specific URL's details based on the id provided
 app.get('/urls/:id', (req, res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], username: req.cookies['username'] };
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], users: userDatabase };
   res.render('urls_show', templateVars);
 });
 
@@ -97,7 +121,7 @@ app.post('/urls/:id', (req, res) => {
   const currentID = req.body.currentID; // Grab data from hidden form named 'currentID'
   const updatedURL = req.body.newURL; // Grab data from form named 'newURL'
   urlDatabase[currentID] = updatedURL; // update db
-  const templateVars = { id: currentID, longURL: updatedURL, username: req.cookies['username'] };
+  const templateVars = { id: currentID, longURL: updatedURL, users: userDatabase };
   res.render('urls_show', templateVars);
 });
 
