@@ -28,6 +28,15 @@ const generateRandomID = () => {
   return Math.random().toString(36).substring(6);
 };
 
+const userLookup = (userEmail) => {
+  // Check if user already exists
+  for (let user in userDatabase) {
+    if (userDatabase[user].email === userEmail) return null;
+    else return user;
+    }
+
+};
+
 // Root route, redirects to /urls page
 app.get('/', (req, res) => {
   res.redirect('/urls');
@@ -47,17 +56,17 @@ app.get('/register', (req, res) => {
 
 // Route to post registration info of user into database and redirect to /urls
 app.post('/register', (req, res) => {
-  // Store user information
-  const email = req.body.email;
-  const password = req.body.password;
+  // Generate user ID
   const randomUserId = generateRandomID();
 
-  // Set login flag as true
-  loggedInFlag = true;
+  // Check if any form field is empty
+  if (!req.body.email || !req.body.password) return res.send("Bad Request: 400");
+
+  // Check if user already exists
+  if (userLookup(req.body.email) === null) return res.send("Bad Request: 400")
 
   // Add user information to the database
-  userDatabase[randomUserId] = { id: randomUserId, email: email, password: password };
-
+  userDatabase[randomUserId] = { id: randomUserId, email: req.body.email, password: req.body.password };
 
   // Set cookie to remember user ID
   res.cookie('user_id', randomUserId);
