@@ -39,6 +39,10 @@ app.get('/', (req, res) => {
   res.redirect('/urls');
 });
 
+app.get('/login', (req, res) => {
+  res.render('login');
+});
+
 // Route to post username to login page then redirect to /urls
 app.post('/login', (req, res) => {
   const userId = req.body.user_id;

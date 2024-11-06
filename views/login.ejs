@@ -17,18 +17,13 @@
   <title>TinyApp</title>
   </head>
   <body>
-    <%- include('partials/_header') %>
+<!-- Can't include partials because user is not defined-->
     <main style="margin: 1em;">
-      <h3>Registration</h3>
-      <form method="POST" action="/register">
-        <label display="block" for="email">Email:</label>
-        <input id="email" name="email" type="email" placeholder="janedoe@email.com">
-        <br>
-        <label display="block" for="password">Password:</label>
-        <input id="password" name="password" type="password" placeholder="password">
-        <br>
-        <br>
-        <button type="submit">Submit</button>
+      <h3>Login</h3>
+      <form method="POST" action="/login">
+        <label display="block">Email:</label><input type="email" name="email" placeholder="janedoe@email.com"><br>
+        <label display="block">Password:</label><input type="password" name="password" placeholder="password"><br>
+        <input type="submit" value="Login">
       </form>
     </main>
     <!-- Bootstrap JS -->
