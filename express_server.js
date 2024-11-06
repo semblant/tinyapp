@@ -57,10 +57,10 @@ app.post('/register', (req, res) => {
   const randomUserId = generateRandomID();
 
   // Check if any form field is empty
-  if (!req.body.email || !req.body.password) return res.status(400).send("Bad Request: 400");
+  if (!req.body.email || !req.body.password) return res.status(400).send("Email and/or password fields cannot be blank.");
 
   // Check if user already exists
-  if (userLookup(req.body.email) !== null) return res.status(400).send("Bad Request: 400");
+  if (userLookup(req.body.email) !== null) return res.status(400).send(`A user with email ${req.body.email} already exists.`);
 
   // Add user information to the database
   userDatabase[randomUserId] = { id: randomUserId, email: req.body.email, password: req.body.password };
