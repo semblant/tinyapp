@@ -39,9 +39,23 @@ app.get('/', (req, res) => {
   res.redirect('/urls');
 });
 
-// Route to post username to login page then redirect to /urls
+app.get('/login', (req, res) => {
+  res.render('login');
+});
+
+// Route to post user_id cookie to login page then redirect to /urls
 app.post('/login', (req, res) => {
-  const userId = req.body.user_id;
+  // Check if the fields are filled out properly
+  if (!req.body.email || !req.body.password) return res.status(400).send("Email and/or password fields cannot be empty");
+
+  // Check if the user doesn't exist
+  else if (userLookup(req.body.email) === null) return res.status(403).send(`That user with email ${req.body.email} doesn't exist`)
+
+  // Check password match if user exists
+  else if (userLookup(req.body.email).password !== req.body.password) return res.status(403).send("Incorrect Password");
+
+  // Else find the user ID and add it as a cookie
+  const userId = userLookup(req.body.email).id;
   res.cookie('user_id', userId);
   res.redirect('/urls');
 });
@@ -71,10 +85,10 @@ app.post('/register', (req, res) => {
   res.redirect('/urls');
 });
 
-// Route to post a logout by clearing the username cookie and redirecting to /urls
+// Route to post a logout by clearing the user_id cookie and redirecting to /urls
 app.post('/logout', (req, res) => {
   res.clearCookie('user_id');
-  res.redirect('/urls');
+  res.redirect('/login');
 });
 
 // Route to return the urlDatabase as a JSON object
@@ -84,7 +98,6 @@ app.get('/urls.json', (req, res) => {
 
 // Route to display a list of URLs, renders an HTML template with url data
 app.get('/urls', (req, res) => {
-
   const templateVars = { urls: urlDatabase, user: userDatabase[req.cookies.user_id] };
   res.render('urls_index', templateVars);
 });
