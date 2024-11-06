@@ -17,8 +17,6 @@ const urlDatabase = {
 
 const userDatabase = {};
 
-let loggedInFlag = false;
-
 /**
  * Function generates a random URL ID
  *
@@ -30,11 +28,10 @@ const generateRandomID = () => {
 
 const userLookup = (userEmail) => {
   // Check if user already exists
-  for (let user in userDatabase) {
-    if (userDatabase[user].email === userEmail) return null;
-    else return user;
+  for (const user in userDatabase) {
+    if (userDatabase[user].email === userEmail) return userDatabase[user];
     }
-
+  return null;
 };
 
 // Root route, redirects to /urls page
@@ -60,10 +57,10 @@ app.post('/register', (req, res) => {
   const randomUserId = generateRandomID();
 
   // Check if any form field is empty
-  if (!req.body.email || !req.body.password) return res.send("Bad Request: 400");
+  if (!req.body.email || !req.body.password) return res.status(400).send("Bad Request: 400");
 
   // Check if user already exists
-  if (userLookup(req.body.email) === null) return res.send("Bad Request: 400")
+  if (userLookup(req.body.email) !== null) return res.status(400).send("Bad Request: 400");
 
   // Add user information to the database
   userDatabase[randomUserId] = { id: randomUserId, email: req.body.email, password: req.body.password };
@@ -87,13 +84,14 @@ app.get('/urls.json', (req, res) => {
 
 // Route to display a list of URLs, renders an HTML template with url data
 app.get('/urls', (req, res) => {
-  const templateVars = { urls: urlDatabase, users: userDatabase };
+
+  const templateVars = { urls: urlDatabase, user: userDatabase[req.cookies.user_id] };
   res.render('urls_index', templateVars);
 });
 
 // Route to create a new URL, renders an HTML template form to submit a new URL
 app.get('/urls/new', (req, res) => {
-  const templateVars = { users: userDatabase };
+  const templateVars = { user: userDatabase[req.cookies.user_id] };
   res.render('urls_new', templateVars);
 });
 
@@ -114,7 +112,7 @@ app.get('/u/:id', (req, res) => {
 
 // Dynamic route to display a specific URL's details based on the id provided
 app.get('/urls/:id', (req, res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], users: userDatabase };
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], user: userDatabase[req.cookies.user_id] };
   res.render('urls_show', templateVars);
 });
 
@@ -130,7 +128,7 @@ app.post('/urls/:id', (req, res) => {
   const currentID = req.body.currentID; // Grab data from hidden form named 'currentID'
   const updatedURL = req.body.newURL; // Grab data from form named 'newURL'
   urlDatabase[currentID] = updatedURL; // update db
-  const templateVars = { id: currentID, longURL: updatedURL, users: userDatabase };
+  const templateVars = { id: currentID, longURL: updatedURL, user: userDatabase[req.cookies.user_id]};
   res.render('urls_show', templateVars);
 });
 
