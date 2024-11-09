@@ -20,9 +20,11 @@
     </div>
     <div class="login information">
       <div>
-          <% if (user) { %>
+        <!-- Check if current user exists in database -->
+          <% if (currentUser) { %>
           <form method="POST" action="/logout">
-            <label>Logged in as: <%= user.email %>
+            <!-- Display email-->
+            <label>Logged in as: <%= currentUser.email %>
               <input type="submit" value="Logout">
             </label>
           </form>
@@ -30,6 +32,7 @@
             <a class="nav-item nav-link" href="/urls">Register</a>
             <a class="nav-item nav-link" href="/urls">Login</a>
           </form>
+          <!-- If user doesn't exist display register and login links -->
           <% } else { %>
             <a class="nav-item nav-link" href="/register">Register</a>
             <a class="nav-item nav-link" href="/login">Login</a>

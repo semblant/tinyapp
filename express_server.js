@@ -7,6 +7,8 @@ const morgan = require('morgan');
 const app = express();
 const PORT = 8080; // default port 8080
 
+
+// Databases
 const urlDatabase = {
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
@@ -21,8 +23,6 @@ const urlDatabase = {
 const userDatabase = {};
 
 
-
-
 // View Engine
 app.set('view engine', 'ejs'); // set ejs as templating engine
 
@@ -34,7 +34,7 @@ app.use(cookieParser());
 app.use(morgan('dev'));
 
 
-// HTTP METHOD HANDLERS
+// FUNCTIONS
 
 /**
  * Function generates a random URL ID
@@ -45,6 +45,14 @@ const generateRandomID = () => {
   return Math.random().toString(36).substring(6);
 };
 
+/**
+ * Function finds a user in the database from a given email
+ *
+ * @param {string} userEmail - The email of the user to lookup
+ * @returns
+ *       - User object if the user exists
+ *       - Null if user doesn't exist
+ */
 const userLookup = (userEmail) => {
   // Check if user already exists
   for (const user in userDatabase) {
@@ -52,6 +60,28 @@ const userLookup = (userEmail) => {
     }
   return null;
 };
+
+/**
+ * Function
+ *
+ * @param {string} id - The user ID used to retrieve associated URLs
+ * @returns {Array} userURLS - the array that contains the URLs that belong to the user
+ */
+const urlsForUser = (id) => {
+  let userURLS = [];
+  for (let urlId in urlDatabase) {
+
+    // Check if current user has urls in the database
+    if (urlDatabase[urlId].userID === id) {
+      userURLS.push(urlDatabase[urlId].longURL);
+    }
+  }
+  return userURLS;
+};
+
+
+// HTTP METHOD HANDLERS
+
 
 // Root route, redirects to /urls page
 app.get('/', (req, res) => {
@@ -117,7 +147,20 @@ app.get('/urls.json', (req, res) => {
 
 // Route to display a list of URLs, renders an HTML template with url data
 app.get('/urls', (req, res) => {
-  const templateVars = { urls: urlDatabase, user: userDatabase[req.cookies.user_id] };
+  // Store current user information
+  const currentUserId = req.cookies.user_id;
+  const currentUser = userDatabase[currentUserId];
+
+  // Check if current user is logged in
+  if (!currentUser) {
+    // If not logged in, render a message
+    return res.render('urls_index', { urls: null, currentUser: null, userURLS: null });
+  }
+
+  // If user is logged in, show the URLs
+  const userURLS = urlsForUser(currentUserId);
+  console.log(userURLS)
+  const templateVars = { urls: urlDatabase, currentUser, userURLS };
   res.render('urls_index', templateVars);
 });
 
@@ -166,7 +209,6 @@ app.get('/urls/:id', (req, res) => {
 // Dynamic route to delete a URL from the database and redirect to the /urls page
 app.post('/urls/:id/delete', (req, res) => {
   // Handle case where user is not logged in
-  console.log(req.body)
   if (!req.cookies.user_id) return res.status(403).send('Must be registered and logged in to manipulate URLs.')
 
   // Case where user is logged in
@@ -180,7 +222,7 @@ app.post('/urls/:id', (req, res) => {
   const currentID = req.body.currentID; // Grab data from hidden form named 'currentID'
   const updatedURL = req.body.newURL; // Grab data from form named 'newURL'
   urlDatabase[currentID] = updatedURL; // update db
-  const templateVars = { id: currentID, longURL: updatedURL, user: userDatabase[req.cookies.user_id]};
+  const templateVars = { id: currentID, longURL: updatedURL, user: userDatabase[req.cookies.user_id] };
   res.render('urls_show', templateVars);
 });
 

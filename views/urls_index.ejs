@@ -20,6 +20,11 @@
     <%- include('partials/_header') %>
     <main style="margin: 1em;">
       <h3>My URLs</h3>
+      <!-- If current user is not logged in, show message only-->
+      <% if (!currentUser) { %>
+        <p>Please login to see your URLS</p>
+      <% }  else { %>
+      <!-- If current user is logged in, show table of URLs-->
       <table class="table">
         <thead>
           <tr>
@@ -30,22 +35,27 @@
           </tr>
         </thead>
         <tbody>
+          <!-- Loop through the urls object -->
             <% for (let id in urls) { %>
-              <% if (urls[id]) { %>
-              <tr>
-                <td><%= id %></td>
-                <td><%= urls[id].longURL %></td>
-                <td>
-                  <form method="POST" action="/urls/<%= id %>/delete">
-                    <button type="submit">Delete</button>
-                  </form>
-                </td>
-                <td>
-                  <form method="GET" action="/urls/<%= id %>">
-                    <button type="submit">Edit</button>
-                  </form>
-                </td>
-              </tr>
+                <!-- If URL exists, show its ID and the long URL-->
+                <% if (urls[id]) { %>
+                <tr>
+                  <td><%= id %></td>
+                  <td><%= urls[id].longURL %></td>
+                  <td>
+                    <!-- Form to delete a URL -->
+                    <form method="POST" action="/urls/<%= id %>/delete">
+                      <button type="submit">Delete</button>
+                    </form>
+                  </td>
+                  <td>
+                    <!-- Form to edit a URL -->
+                    <form method="GET" action="/urls/<%= id %>">
+                      <button type="submit">Edit</button>
+                    </form>
+                  </td>
+                </tr>
+                <% } %>
               <% } %>
             <% } %>
         </tbody>
