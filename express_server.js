@@ -13,7 +13,6 @@ const salt = genSaltSync(SALT_ROUNDS);
 
 // Databases
 const urlDatabase = {};
-
 const userDatabase = {};
 
 
@@ -50,11 +49,13 @@ const generateRandomID = () => {
  *       - User object if the user exists
  *       - Null if user doesn't exist
  */
-const userLookup = (userEmail) => {
+const userLookup = (userEmail, database) => {
   // Check if user already exists
-  for (const user in userDatabase) {
+  for (const user in database) {
     // Return user object once found
-    if (userDatabase[user].email === userEmail) return userDatabase[user];
+    if (database[user].email === userEmail) {
+      return database[user];
+    }
   }
   return null;
 };
@@ -93,18 +94,22 @@ app.get('/login', (req, res) => {
 
 // Route to post user_id cookie to login page then redirect to /urls
 app.post('/login', (req, res) => {
+  // Store current user information
+  const currentUser = userLookup(req.body.email, userDatabase);
+  console.log('currentUser.password', currentUser.password);
+  console.log(bcrypt.compareSync(currentUser.password, req.body.password))
   // Check if the fields are filled out properly
   if (!req.body.email || !req.body.password) return res.status(400).send("Email and/or password fields cannot be empty");
 
   // Check if the user doesn't exist
-  else if (userLookup(req.body.email) === null) return res.status(404).send(`That user with email ${req.body.email} doesn't exist`);
+  else if (currentUser === null) return res.status(404).send(`That user with email ${req.body.email} doesn't exist`);
 
-  // Check if existing hased password matches current inputted password
-  else if (bcrypt.compareSync(userLookup(req.body.email).password, req.body.password)) return res.status(403).send("Incorrect Password");
+  // Check if existing hashed password matches current inputted password
+  else if (!bcrypt.compareSync(req.body.password, currentUser.password)) return res.status(403).send("Incorrect Password");
 
   // Else find the user ID and add it as a cookie
-  const userId = userLookup(req.body.email).id;
-  req.session.user_id = userId; // set existing ID as cookie
+  const userId = currentUser.id;
+  req.session.user_id = userId; // set existing userID as cookie
 
   res.redirect('/urls');
 });
@@ -123,7 +128,7 @@ app.post('/register', (req, res) => {
   if (!req.body.email || !req.body.password) return res.status(400).send("Email and/or password fields cannot be blank.");
 
   // Check if user already exists
-  if (userLookup(req.body.email) !== null) return res.status(400).send(`A user with email ${req.body.email} already exists.`);
+  if (userLookup(req.body.email, userDatabase) !== null) return res.status(400).send(`A user with email ${req.body.email} already exists.`);
 
   // Add user information to the database
   userDatabase[randomUserId] = {
@@ -134,6 +139,9 @@ app.post('/register', (req, res) => {
 
   // Set cookie to remember user ID
   req.session.user_id = randomUserId; // set encrypted cookie
+
+console.log(userDatabase)
+
   res.redirect('/urls');
 });
 
