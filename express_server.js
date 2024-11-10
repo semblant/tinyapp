@@ -2,11 +2,14 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
+const bcrypt = require('bcryptjs');
+const { genSaltSync } = require('bcrypt');
 
 // Constants
 const app = express();
 const PORT = 8080; // default port 8080
-
+const SALT_ROUNDS = 5;
+const salt = genSaltSync(SALT_ROUNDS);
 
 // Databases
 const urlDatabase = {};
@@ -93,8 +96,8 @@ app.post('/login', (req, res) => {
   // Check if the user doesn't exist
   else if (userLookup(req.body.email) === null) return res.status(404).send(`That user with email ${req.body.email} doesn't exist`);
 
-  // Check password match if user exists
-  else if (userLookup(req.body.email).password !== req.body.password) return res.status(403).send("Incorrect Password");
+  // Check hashed password match if user exists
+  else if (bcrypt.compareSync(userLookup(req.body.email).password, req.body.password)) return res.status(403).send("Incorrect Password");
 
   // Else find the user ID and add it as a cookie
   const userId = userLookup(req.body.email).id;
@@ -119,7 +122,11 @@ app.post('/register', (req, res) => {
   if (userLookup(req.body.email) !== null) return res.status(400).send(`A user with email ${req.body.email} already exists.`);
 
   // Add user information to the database
-  userDatabase[randomUserId] = { id: randomUserId, email: req.body.email, password: req.body.password };
+  userDatabase[randomUserId] = {
+    id: randomUserId,
+    email: req.body.email,
+    password: bcrypt.hashSync(req.body.password, salt) // hash the password before storing
+  };
 
   // Set cookie to remember user ID
   res.cookie('user_id', randomUserId);
