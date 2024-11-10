@@ -49,14 +49,14 @@ const generateRandomID = () => {
  * @param {string} id - The user ID used to retrieve associated URLs
  * @returns {Array} userURLS - the array that contains the URLs that belong to the user
  */
-const urlsForUser = (id) => {
+const urlsForUser = (id, database) => {
   let userURLS = {};
 
   // Loop through the URL database keys (URL IDs)
-  for (let urlId in urlDatabase) {
+  for (let urlId in database) {
 
     // Check if current user has created any urls in the database
-    if (urlDatabase[urlId].userID === id) userURLS[urlId] = urlDatabase[urlId];
+    if (database[urlId].userID === id) userURLS[urlId] = database[urlId];
 
   }
   return userURLS;
@@ -152,7 +152,7 @@ app.get('/urls', (req, res) => {
   }
 
   // If user is logged in, show the URLs
-  const userURLS = urlsForUser(currentUserId);
+  const userURLS = urlsForUser(currentUserId, urlDatabase);
 
   // Pass only the user's urls to the template
   const templateVars = { urls: userURLS, currentUser };
@@ -194,7 +194,7 @@ app.post('/urls', (req, res) => {
 // Route to redirect any shortURl (/u/:id) to its longURL
 app.get('/u/:id', (req, res) => {
   // Lookup URLs for current user
-  const currentUserURLS = urlsForUser(req.session.user_id);
+  const currentUserURLS = urlsForUser(req.session.user_id, urlDatabase);
 
   // Check if the URL exists
   if (!urlDatabase[req.params.id]) return res.status(404).send('URL does not exist!');

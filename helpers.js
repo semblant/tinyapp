@@ -17,5 +17,27 @@ const userLookup = (userEmail, database) => {
   return null;
 };
 
+/**
+ * Function
+ *
+ * @param {string} id - The user ID used to retrieve associated URLs
+ * @returns {Array} userURLS - the array that contains the URLs that belong to the user
+ */
+const urlsForUser = (id, database) => {
+  let userURLS = {};
 
-module.exports = { userLookup };
+  // Loop through the URL database keys (URL IDs)
+  for (let urlId in database) {
+
+    // Check if current user has created any urls in the database
+    if (database[urlId].userID === id) userURLS[urlId] = database[urlId];
+
+  }
+  return userURLS;
+};
+
+
+module.exports = {
+  userLookup,
+  urlsForUser,
+};
