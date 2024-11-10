@@ -36,8 +36,17 @@ const urlsForUser = (id, database) => {
   return userURLS;
 };
 
+/**
+ * Function generates a random URL ID
+ *
+ * @returns {string} - the random ID string
+ */
+const generateRandomID = () => {
+  return Math.random().toString(36).substring(6);
+};
 
 module.exports = {
   userLookup,
   urlsForUser,
+  generateRandomID,
 };

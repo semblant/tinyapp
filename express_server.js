@@ -1,58 +1,43 @@
+// Require express
 const express = require('express');
+
+// Require middleware
 const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const morgan = require('morgan');
 const bcrypt = require('bcryptjs');
-const { genSaltSync } = require('bcrypt');
-const { userLookup } = require('./helpers')
+
+// Require Helper Functions
+const { userLookup, urlsForUser, generateRandomID } = require('./helpers');
+
+// Requre Constants
+const { PORT, salt } = require('./constants');
+
+// Require Databases
+const { urlDatabase, userDatabase } = require('./databases');
 
 // Constants
 const app = express();
-const PORT = 8080; // default port 8080
-const SALT_ROUNDS = 5;
-const salt = genSaltSync(SALT_ROUNDS);
-
-// Databases
-const urlDatabase = {};
-const userDatabase = {};
-
 
 // View Engine
 app.set('view engine', 'ejs'); // set ejs as view engine
 
-
 // Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(morgan('dev'));
 app.use(cookieSession({
   name: 'session',
   keys: ['keys1'],
 }));
-app.use(morgan('dev'));
-
-
-// FUNCTIONS
-
-/**
- * Function generates a random URL ID
- *
- * @returns {string} - the random ID string
- */
-const generateRandomID = () => {
-  return Math.random().toString(36).substring(6);
-};
-
-
-
 
 // HTTP METHOD HANDLERS
-
-
 // Root route, redirects to /urls page
 app.get('/', (req, res) => {
   res.redirect('/urls');
 });
 
+// Route to get login path and render login.ejs template
 app.get('/login', (req, res) => {
   res.render('login');
 });
