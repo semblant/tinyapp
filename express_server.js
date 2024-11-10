@@ -9,22 +9,13 @@ const PORT = 8080; // default port 8080
 
 
 // Databases
-const urlDatabase = {
-  "b2xVn2": {
-    longURL: "http://www.lighthouselabs.ca",
-    userID: '',
-  },
-  "9sm5xK": {
-    longURL: "http://www.google.com",
-    userID: '',
-  },
-};
+const urlDatabase = {};
 
 const userDatabase = {};
 
 
 // View Engine
-app.set('view engine', 'ejs'); // set ejs as templating engine
+app.set('view engine', 'ejs'); // set ejs as view engine
 
 
 // Middleware
@@ -56,8 +47,9 @@ const generateRandomID = () => {
 const userLookup = (userEmail) => {
   // Check if user already exists
   for (const user in userDatabase) {
+    // Return user object once found
     if (userDatabase[user].email === userEmail) return userDatabase[user];
-    }
+  }
   return null;
 };
 
@@ -69,14 +61,14 @@ const userLookup = (userEmail) => {
  */
 const urlsForUser = (id) => {
   let userURLS = {};
+
+  // Loop through the URL database keys (URL IDs)
   for (let urlId in urlDatabase) {
 
-    // Check if current user has urls in the database
-    if (urlDatabase[urlId].userID === id) {
-      userURLS[urlId] = urlDatabase[urlId];
-    }
+    // Check if current user has created any urls in the database
+    if (urlDatabase[urlId].userID === id) userURLS[urlId] = urlDatabase[urlId];
+
   }
-  console.log("________________USERURLS: ", userURLS)
   return userURLS;
 };
 
@@ -99,7 +91,7 @@ app.post('/login', (req, res) => {
   if (!req.body.email || !req.body.password) return res.status(400).send("Email and/or password fields cannot be empty");
 
   // Check if the user doesn't exist
-  else if (userLookup(req.body.email) === null) return res.status(403).send(`That user with email ${req.body.email} doesn't exist`)
+  else if (userLookup(req.body.email) === null) return res.status(404).send(`That user with email ${req.body.email} doesn't exist`);
 
   // Check password match if user exists
   else if (userLookup(req.body.email).password !== req.body.password) return res.status(403).send("Incorrect Password");
@@ -117,7 +109,7 @@ app.get('/register', (req, res) => {
 
 // Route to post registration info of user into database and redirect to /urls
 app.post('/register', (req, res) => {
-  // Generate user ID
+  // Generate UserID
   const randomUserId = generateRandomID();
 
   // Check if any form field is empty
@@ -160,7 +152,7 @@ app.get('/urls', (req, res) => {
 
   // If user is logged in, show the URLs
   const userURLS = urlsForUser(currentUserId);
-  console.log(userURLS)
+
   // Pass only the user's urls to the template
   const templateVars = { urls: userURLS, currentUser };
   res.render('urls_index', templateVars);
@@ -175,7 +167,7 @@ app.get('/urls/new', (req, res) => {
   const templateVars = { currentUser };
 
   // If current user doesn't exist in the DB, redirect to /login path
-  if (!currentUser) return res.redirect('/login')
+  if (!currentUser) return res.redirect('/login');
 
   res.render('urls_new', templateVars);
 });
@@ -186,7 +178,7 @@ app.post('/urls', (req, res) => {
   const currentUserId = req.cookies.user_id;
 
   // Handle case where user is not logged in
-  if (!currentUserId) return res.status(403).send('Must be registered and logged in to manipulate URLs.')
+  if (!currentUserId) return res.status(403).send('Must be registered and logged in to manipulate URLs.');
 
   // Store post data
   const newId = generateRandomID();
@@ -194,7 +186,7 @@ app.post('/urls', (req, res) => {
 
   // Update urls Database
   urlDatabase[newId] = {longURL: newLongURL, userID: currentUserId };
-  console.log(urlDatabase)
+  console.log(urlDatabase);
   res.redirect(`/urls/${newId}`);
 });
 
@@ -203,31 +195,34 @@ app.get('/u/:id', (req, res) => {
   // Lookup URLs for current user
   const currentUserURLS = urlsForUser(req.cookies.user_id);
 
-  // Check if user owns the URL
-  if (!currentUserURLS[req.params.id]) return res.status(404).send('That URL doesn\'t exist.');
+  // Check if the URL exists
+  if (!urlDatabase[req.params.id]) return res.status(404).send('URL does not exist!');
+
+  // Check if current user owns the URL
+  if (!currentUserURLS[req.params.id]) return res.status(403).send('You do not have access to that URL');
 
   // Redirect user to URL if they own it
-  res.redirect(`${longURL}`);
+  res.redirect(`${currentUserURLS[req.params.id].longURL}`);
 });
 
 // Dynamic route to update a URL and redirect to the URLs page
 app.post('/urls/:id', (req, res) => {
   // Store current user information
   const currentUserId = req.cookies.user_id;
-  const currentUser = userDatabase[currentUserId]
+  const currentUser = userDatabase[currentUserId];
 
   // Store current /urls/:id information
   const currentUrlID = req.body.currentUrlId; // Grab data from hidden form named 'currentUrlId'
   const updatedURL = req.body.newURL; // Grab data from form named 'newURL'
 
   // Check if user is logged in
-  if (!currentUserId) return res.status(403).send('Please login before requesting any changes')
+  if (!currentUserId) return res.status(403).send('Please login before requesting any changes');
 
   // Check if URL exists
-  if (!urlDatabase[currentUrlID]) return res.status(404).send('That URl does not exist');
+  if (!urlDatabase[currentUrlID]) return res.status(404).send('That URL does not exist');
 
   // Check if current user owns URL
-  if (urlDatabase[currentUrlID].userID !== currentUserId) return res.status(403).send('You do not have permission to edit this URL')
+  if (urlDatabase[currentUrlID].userID !== currentUserId) return res.status(403).send('You do not have permission to edit this URL');
 
   // Update database
   urlDatabase[currentUrlID].longURL = updatedURL;
@@ -248,10 +243,10 @@ app.get('/urls/:id', (req, res) => {
   const currentUrlID = req.params.id;
 
   // Handle case where user is not logged in
-  if (!currentUser) return res.status(403).send('Must be registered and logged in to manipulate URLs.')
+  if (!currentUser) return res.status(403).send('Must be registered and logged in to manipulate URLs.');
 
   // Check if current user owns the URL they are trying to access
-  if (urlDatabase[currentUrlID].userID !== currentUserId) return res.status(403).send('You do not have permission to view this URL')
+  if (urlDatabase[currentUrlID].userID !== currentUserId) return res.status(403).send('You do not have permission to view this URL');
 
   // Pass information to template
   const templateVars = { id: currentUrlID, longURL: urlDatabase[currentUrlID].longURL, currentUser };
@@ -264,7 +259,7 @@ app.post('/urls/:id/delete', (req, res) => {
   const currentUserId = req.cookies.user_id;
 
   // Handle case where user is not logged in
-  if (!currentUserId) return res.status(403).send('Must be registered and logged in to manipulate URLs.')
+  if (!currentUserId) return res.status(403).send('Must be registered and logged in to manipulate URLs.');
 
   // Store delete request parameters
   const urlToDelete = req.params.id;
@@ -273,7 +268,7 @@ app.post('/urls/:id/delete', (req, res) => {
   if (!urlDatabase[urlToDelete]) return res.status(404).send('URL cannot be found');
 
   // Check if current user owns the URL
-  if (urlDatabase[urlToDelete].userID !== currentUserId) return res.status(403).send('You do not have permission to delete that URL')
+  if (urlDatabase[urlToDelete].userID !== currentUserId) return res.status(403).send('You do not have permission to delete that URL');
 
   // Delete the URL
   delete urlDatabase[urlToDelete];
