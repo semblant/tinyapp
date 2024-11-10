@@ -23,7 +23,7 @@ const app = express();
 // Global Variables
 let frequencyTracker = 0; // Tracks number of visits to /urls/:id
 let uniqueFreqTracker = 0; // Tracks number of UNIQUE visits to /urls/:id
-
+let timestampTracker = [];
 // View Engine
 app.set('view engine', 'ejs'); // set ejs as view engine
 
@@ -229,15 +229,20 @@ app.get('/urls/:id', (req, res) => {
     uniqueFreqTracker += 1;
   };
 
+  req.session.visitDate = new Date().toString();
+
+  timestampTracker.push(req.session.visitDate);
+
   // Pass information to template
   const templateVars = {
     id: currentUrlID, // the URL id
     longURL: urlDatabase[currentUrlID].longURL, // long URL associated with URL id
     totalVisits: frequencyTracker, // cookieTracker array
     uniqueVisits: uniqueFreqTracker, // store number of unique visitors
+    timeStamps: timestampTracker, // store array of timestamps
     currentUser
   };
-  console.log('templateVars.uniqueVisits: ', templateVars.uniqueVisits)
+
   res.render('urls_show', templateVars);
 });
 

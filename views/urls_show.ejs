@@ -24,7 +24,11 @@
         <hr>
         <p>
           Total visits to <%= id %>: <%= totalVisits %> <br>
-          Unique visits to <%= id %>: <%= uniqueVisits %>
+          Unique visits to <%= id %>: <%= uniqueVisits %> <br>
+          List of Visits: <br>
+          <% for (let time of timeStamps) { %>
+            <li><%= time %></li>
+          <% } %>
           <hr>
           <h4 color="grey">EDIT</h4>
           <!-- Form to update a URL using HTTP verb PUT -->
