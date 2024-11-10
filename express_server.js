@@ -202,10 +202,11 @@ app.post('/urls', (req, res) => {
 app.get('/u/:id', (req, res) => {
   // Lookup URLs for current user
   const currentUserURLS = urlsForUser(req.cookies.user_id);
-  const longURL = currentUserURLS.longURL[req.params.id];
 
-  if (!longURL) return res.status(404).send('That URL doesn\'t exist.');
+  // Check if user owns the URL
+  if (!currentUserURLS[req.params.id]) return res.status(404).send('That URL doesn\'t exist.');
 
+  // Redirect user to URL if they own it
   res.redirect(`${longURL}`);
 });
 
@@ -218,6 +219,15 @@ app.post('/urls/:id', (req, res) => {
   // Store current /urls/:id information
   const currentUrlID = req.body.currentUrlId; // Grab data from hidden form named 'currentUrlId'
   const updatedURL = req.body.newURL; // Grab data from form named 'newURL'
+
+  // Check if user is logged in
+  if (!currentUserId) return res.status(403).send('Please login before requesting any changes')
+
+  // Check if URL exists
+  if (!urlDatabase[currentUrlID]) return res.status(404).send('That URl does not exist');
+
+  // Check if current user owns URL
+  if (urlDatabase[currentUrlID].userID !== currentUserId) return res.status(403).send('You do not have permission to edit this URL')
 
   // Update database
   urlDatabase[currentUrlID].longURL = updatedURL;
@@ -234,18 +244,14 @@ app.get('/urls/:id', (req, res) => {
   const currentUserId = req.cookies.user_id;
   const currentUser = userDatabase[currentUserId];
 
-
   // Store request body information
   const currentUrlID = req.params.id;
 
   // Handle case where user is not logged in
   if (!currentUser) return res.status(403).send('Must be registered and logged in to manipulate URLs.')
-    console.log("req.parazms.id", currentUrlID)
 
   // Check if current user owns the URL they are trying to access
-  console.log("___does this print????", currentUrlID)
-  if (urlDatabase[currentUrlID].userID !== currentUserId)
-  return res.status(403).send('You do not have permission to view this URL')
+  if (urlDatabase[currentUrlID].userID !== currentUserId) return res.status(403).send('You do not have permission to view this URL')
 
   // Pass information to template
   const templateVars = { id: currentUrlID, longURL: urlDatabase[currentUrlID].longURL, currentUser };
@@ -254,11 +260,22 @@ app.get('/urls/:id', (req, res) => {
 
 // Dynamic route to delete a URL from the database and redirect to the /urls page
 app.post('/urls/:id/delete', (req, res) => {
-  // Handle case where user is not logged in
-  if (!req.cookies.user_id) return res.status(403).send('Must be registered and logged in to manipulate URLs.')
+  // Store current user information
+  const currentUserId = req.cookies.user_id;
 
-  // Case where user is logged in
+  // Handle case where user is not logged in
+  if (!currentUserId) return res.status(403).send('Must be registered and logged in to manipulate URLs.')
+
+  // Store delete request parameters
   const urlToDelete = req.params.id;
+
+  // Check if URL exists
+  if (!urlDatabase[urlToDelete]) return res.status(404).send('URL cannot be found');
+
+  // Check if current user owns the URL
+  if (urlDatabase[urlToDelete].userID !== currentUserId) return res.status(403).send('You do not have permission to delete that URL')
+
+  // Delete the URL
   delete urlDatabase[urlToDelete];
   res.redirect('/urls');
 });
