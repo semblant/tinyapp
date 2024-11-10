@@ -96,7 +96,7 @@ app.post('/login', (req, res) => {
   // Check if the user doesn't exist
   else if (userLookup(req.body.email) === null) return res.status(404).send(`That user with email ${req.body.email} doesn't exist`);
 
-  // Check hashed password match if user exists
+  // Check if existing hased password matches current inputted password
   else if (bcrypt.compareSync(userLookup(req.body.email).password, req.body.password)) return res.status(403).send("Incorrect Password");
 
   // Else find the user ID and add it as a cookie
