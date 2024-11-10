@@ -162,7 +162,7 @@ app.get('/urls', (req, res) => {
   const userURLS = urlsForUser(currentUserId);
   console.log(userURLS)
   // Pass only the user's urls to the template
-  const templateVars = { urls: userURLS, currentUser, };
+  const templateVars = { urls: userURLS, currentUser };
   res.render('urls_index', templateVars);
 });
 
@@ -201,7 +201,7 @@ app.post('/urls', (req, res) => {
 // Route to redirect any shortURl (/u/:id) to its longURL
 app.get('/u/:id', (req, res) => {
   // Lookup URLs for current user
-  const currentUserURLS = userURLS(req.cookies.user_id);
+  const currentUserURLS = urlsForUser(req.cookies.user_id);
   const longURL = currentUserURLS.longURL[req.params.id];
 
   if (!longURL) return res.status(404).send('That URL doesn\'t exist.');
@@ -209,21 +209,46 @@ app.get('/u/:id', (req, res) => {
   res.redirect(`${longURL}`);
 });
 
+// Dynamic route to update a URL and redirect to the URLs page
+app.post('/urls/:id', (req, res) => {
+  // Store current user information
+  const currentUserId = req.cookies.user_id;
+  const currentUser = userDatabase[currentUserId]
+
+  // Store current /urls/:id information
+  const currentUrlID = req.body.currentUrlId; // Grab data from hidden form named 'currentUrlId'
+  const updatedURL = req.body.newURL; // Grab data from form named 'newURL'
+
+  // Update database
+  urlDatabase[currentUrlID].longURL = updatedURL;
+  urlDatabase[currentUrlID].userID = currentUserId;
+
+  // Pass new data into template
+  const templateVars = { id: currentUrlID, longURL: updatedURL, currentUser };
+  res.render('urls_show', templateVars);
+});
+
 // Dynamic route to display a specific URL's details based on the id provided
 app.get('/urls/:id', (req, res) => {
   // Store current user information
   const currentUserId = req.cookies.user_id;
   const currentUser = userDatabase[currentUserId];
-  console.log("Req.params.id: ", req.params.id); // the url id
-  console.log('cookie.id: ', req.cookies.user_id)
+
 
   // Store request body information
-  const urlId = req.params.id;
+  const currentUrlID = req.params.id;
 
   // Handle case where user is not logged in
   if (!currentUser) return res.status(403).send('Must be registered and logged in to manipulate URLs.')
-    console.log("req.parazms.id", urlId)
-  const templateVars = { id: urlId, longURL: urlDatabase[urlId].longURL, currentUser };
+    console.log("req.parazms.id", currentUrlID)
+
+  // Check if current user owns the URL they are trying to access
+  console.log("___does this print????", currentUrlID)
+  if (urlDatabase[currentUrlID].userID !== currentUserId)
+  return res.status(403).send('You do not have permission to view this URL')
+
+  // Pass information to template
+  const templateVars = { id: currentUrlID, longURL: urlDatabase[currentUrlID].longURL, currentUser };
   res.render('urls_show', templateVars);
 });
 
@@ -238,27 +263,6 @@ app.post('/urls/:id/delete', (req, res) => {
   res.redirect('/urls');
 });
 
-// Dynamic route to update a URL and redirect to the URLs page
-app.post('/urls/:id', (req, res) => {
-  // Store current user information
-  const currentUserId = req.cookies.user_id;
-  const currentUser = userDatabase[currentUserId]
-
-  // Store current /urls/:id information
-  console.log("--------------")
-  console.log("req.params.id inside /urls/:id      ", req.params.id)
-  console.log("req.params.body inside /urls/:id      ", req.params.body)
-  const currentUrlID = req.body.currentUrlId; // Grab data from hidden form named 'currentUrlId'
-  const updatedURL = req.body.newURL; // Grab data from form named 'newURL'
-
-  // Update database
-  urlDatabase[currentUrlID].longURL = updatedURL;
-  urlDatabase[currentUrlID].userID = currentUserId;
-
-  // Pass new data into template
-  const templateVars = { id: currentUrlID, longURL: updatedURL, currentUser };
-  res.render('urls_show', templateVars);
-});
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
