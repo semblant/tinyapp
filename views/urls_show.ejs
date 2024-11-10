@@ -24,7 +24,8 @@
         <p>
           <hr>
           <h4 color="grey">EDIT</h4>
-          <form id="edit" method="POST" action="/urls/:id">
+          <!-- Form to update a URL using HTTP verb PUT -->
+          <form id="edit" method="POST" action="/urls/:id?_method=PUT">
             <input id="newURL" name="newURL" placeholder="http://">
 
             <!-- Hidden input to grab the ID of the current URL page -->

@@ -48,8 +48,7 @@ app.get('/login', (req, res) => {
 app.post('/login', (req, res) => {
   // Store current user information
   const currentUser = userLookup(req.body.email, userDatabase);
-  console.log('currentUser.password', currentUser.password);
-  console.log(bcrypt.compareSync(currentUser.password, req.body.password));
+
   // Check if the fields are filled out properly
   if (!req.body.email || !req.body.password) return res.status(400).send("Email and/or password fields cannot be empty");
 
@@ -91,9 +90,6 @@ app.post('/register', (req, res) => {
 
   // Set cookie to remember user ID
   req.session.user_id = randomUserId; // set encrypted cookie
-
-  console.log(userDatabase);
-
   res.redirect('/urls');
 });
 
@@ -156,7 +152,6 @@ app.post('/urls', (req, res) => {
 
   // Update urls Database
   urlDatabase[newId] = {longURL: newLongURL, userID: currentUserId };
-  console.log(urlDatabase);
   res.redirect(`/urls/${newId}`);
 });
 
@@ -176,7 +171,7 @@ app.get('/u/:id', (req, res) => {
 });
 
 // Dynamic route to update a URL and redirect to the URLs page
-app.post('/urls/:id', (req, res) => {
+app.put('/urls/:id', (req, res) => {
   // Store current user information
   const currentUserId = req.session.user_id;
   const currentUser = userDatabase[currentUserId];
