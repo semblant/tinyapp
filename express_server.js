@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const morgan = require('morgan');
 const bcrypt = require('bcryptjs');
+const methodOverride = require('method-override');
 
 // Require Helper Functions
 const { userLookup, urlsForUser, generateRandomID } = require('./helpers');
@@ -23,9 +24,10 @@ const app = express();
 app.set('view engine', 'ejs'); // set ejs as view engine
 
 // Middleware
-app.use(express.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-app.use(morgan('dev'));
+app.use(express.urlencoded({ extended: true })); // set to false and you don't need body-parser
+app.use(bodyParser.json()); // parse request bodies to JSON
+app.use(morgan('dev')); // Shows client connection details in server
+app.use(methodOverride('_method')); // Allows use of HTTP methods PUT and DELETE
 app.use(cookieSession({
   name: 'session',
   keys: ['keys1'],
@@ -47,7 +49,7 @@ app.post('/login', (req, res) => {
   // Store current user information
   const currentUser = userLookup(req.body.email, userDatabase);
   console.log('currentUser.password', currentUser.password);
-  console.log(bcrypt.compareSync(currentUser.password, req.body.password))
+  console.log(bcrypt.compareSync(currentUser.password, req.body.password));
   // Check if the fields are filled out properly
   if (!req.body.email || !req.body.password) return res.status(400).send("Email and/or password fields cannot be empty");
 
@@ -90,7 +92,7 @@ app.post('/register', (req, res) => {
   // Set cookie to remember user ID
   req.session.user_id = randomUserId; // set encrypted cookie
 
-console.log(userDatabase)
+  console.log(userDatabase);
 
   res.redirect('/urls');
 });
@@ -225,7 +227,7 @@ app.get('/urls/:id', (req, res) => {
 });
 
 // Dynamic route to delete a URL from the database and redirect to the /urls page
-app.post('/urls/:id/delete', (req, res) => {
+app.delete('/urls/:id/delete', (req, res) => {
   // Store current user information
   const currentUserId = req.session.user_id;
 

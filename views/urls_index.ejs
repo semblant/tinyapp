@@ -43,13 +43,13 @@
                   <td><%= id %></td>
                   <td><%= urls[id].longURL %></td>
                   <td>
-                    <!-- Form to delete a URL -->
-                    <form method="POST" action="/urls/<%= id %>/delete">
+                    <!-- Form to delete a URL using the HTTP verb DELETE -->
+                    <form method="POST" action="/urls/<%= id %>/delete?_method=DELETE">
                       <button type="submit">Delete</button>
                     </form>
                   </td>
                   <td>
-                    <!-- Form to edit a URL-->
+                    <!-- Form to request the page to edit a URL-->
                     <form method="GET" action="/urls/<%= id %>">
                       <button type="submit">Edit</button>
                     </form>
