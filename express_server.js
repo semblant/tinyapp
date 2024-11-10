@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const morgan = require('morgan');
 const bcrypt = require('bcryptjs');
 const { genSaltSync } = require('bcrypt');
@@ -24,7 +24,10 @@ app.set('view engine', 'ejs'); // set ejs as view engine
 // Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['keys1'],
+}));
 app.use(morgan('dev'));
 
 
@@ -101,7 +104,8 @@ app.post('/login', (req, res) => {
 
   // Else find the user ID and add it as a cookie
   const userId = userLookup(req.body.email).id;
-  res.cookie('user_id', userId);
+  req.session.user_id = userId; // set existing ID as cookie
+
   res.redirect('/urls');
 });
 
@@ -129,14 +133,13 @@ app.post('/register', (req, res) => {
   };
 
   // Set cookie to remember user ID
-  res.cookie('user_id', randomUserId);
-
+  req.session.user_id = randomUserId; // set encrypted cookie
   res.redirect('/urls');
 });
 
 // Route to post a logout by clearing the user_id cookie and redirecting to /urls
 app.post('/logout', (req, res) => {
-  res.clearCookie('user_id');
+  req.session = null; // Clears current user's encrypted cookie
   res.redirect('/login');
 });
 
@@ -148,7 +151,7 @@ app.get('/urls.json', (req, res) => {
 // Route to display a list of URLs, renders an HTML template with url data
 app.get('/urls', (req, res) => {
   // Store current user information
-  const currentUserId = req.cookies.user_id;
+  const currentUserId = req.session.user_id;
   const currentUser = userDatabase[currentUserId];
 
   // Check if current user is logged in
@@ -168,7 +171,7 @@ app.get('/urls', (req, res) => {
 // Route to create a new URL, renders an HTML template form to submit a new URL
 app.get('/urls/new', (req, res) => {
   // Store current user information
-  const currentUserId = req.cookies.user_id;
+  const currentUserId = req.session.user_id;
   const currentUser = userDatabase[currentUserId];
 
   const templateVars = { currentUser };
@@ -182,7 +185,7 @@ app.get('/urls/new', (req, res) => {
 // Route to post a new URL and store the data in the database, then redirect to the specific URL for the ID
 app.post('/urls', (req, res) => {
   // Store current user information
-  const currentUserId = req.cookies.user_id;
+  const currentUserId = req.session.user_id;
 
   // Handle case where user is not logged in
   if (!currentUserId) return res.status(403).send('Must be registered and logged in to manipulate URLs.');
@@ -200,7 +203,7 @@ app.post('/urls', (req, res) => {
 // Route to redirect any shortURl (/u/:id) to its longURL
 app.get('/u/:id', (req, res) => {
   // Lookup URLs for current user
-  const currentUserURLS = urlsForUser(req.cookies.user_id);
+  const currentUserURLS = urlsForUser(req.session.user_id);
 
   // Check if the URL exists
   if (!urlDatabase[req.params.id]) return res.status(404).send('URL does not exist!');
@@ -215,7 +218,7 @@ app.get('/u/:id', (req, res) => {
 // Dynamic route to update a URL and redirect to the URLs page
 app.post('/urls/:id', (req, res) => {
   // Store current user information
-  const currentUserId = req.cookies.user_id;
+  const currentUserId = req.session.user_id;
   const currentUser = userDatabase[currentUserId];
 
   // Store current /urls/:id information
@@ -243,7 +246,7 @@ app.post('/urls/:id', (req, res) => {
 // Dynamic route to display a specific URL's details based on the id provided
 app.get('/urls/:id', (req, res) => {
   // Store current user information
-  const currentUserId = req.cookies.user_id;
+  const currentUserId = req.session.user_id;
   const currentUser = userDatabase[currentUserId];
 
   // Store request body information
@@ -251,6 +254,9 @@ app.get('/urls/:id', (req, res) => {
 
   // Handle case where user is not logged in
   if (!currentUser) return res.status(403).send('Must be registered and logged in to manipulate URLs.');
+
+  // Check if URL exists
+  if (!urlDatabase[currentUrlID]) return res.status(404).send('URL not found');
 
   // Check if current user owns the URL they are trying to access
   if (urlDatabase[currentUrlID].userID !== currentUserId) return res.status(403).send('You do not have permission to view this URL');
@@ -263,7 +269,7 @@ app.get('/urls/:id', (req, res) => {
 // Dynamic route to delete a URL from the database and redirect to the /urls page
 app.post('/urls/:id/delete', (req, res) => {
   // Store current user information
-  const currentUserId = req.cookies.user_id;
+  const currentUserId = req.session.user_id;
 
   // Handle case where user is not logged in
   if (!currentUserId) return res.status(403).send('Must be registered and logged in to manipulate URLs.');
