@@ -4,6 +4,7 @@ const cookieSession = require('cookie-session');
 const morgan = require('morgan');
 const bcrypt = require('bcryptjs');
 const { genSaltSync } = require('bcrypt');
+const { userLookup } = require('./helpers')
 
 // Constants
 const app = express();
@@ -41,24 +42,6 @@ const generateRandomID = () => {
   return Math.random().toString(36).substring(6);
 };
 
-/**
- * Function finds a user in the database from a given email
- *
- * @param {string} userEmail - The email of the user to lookup
- * @returns
- *       - User object if the user exists
- *       - Null if user doesn't exist
- */
-const userLookup = (userEmail, database) => {
-  // Check if user already exists
-  for (const user in database) {
-    // Return user object once found
-    if (database[user].email === userEmail) {
-      return database[user];
-    }
-  }
-  return null;
-};
 
 /**
  * Function
