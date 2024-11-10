@@ -25,10 +25,10 @@
           <hr>
           <h4 color="grey">EDIT</h4>
           <form id="edit" method="POST" action="/urls/:id">
-            <input id="editField" name="newURL" placeholder="http://">
+            <input id="newURL" name="newURL" placeholder="http://">
 
             <!-- Hidden input to grab the ID of the current URL page -->
-            <input type="hidden" id="currentID" name="currentID" value="<%= id %>">
+            <input type="hidden" id="currentUrlId" name="currentUrlId" value="<%= id %>">
           <button type="submit">Submit</button>
         </form>
         </p>

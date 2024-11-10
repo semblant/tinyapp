@@ -68,14 +68,15 @@ const userLookup = (userEmail) => {
  * @returns {Array} userURLS - the array that contains the URLs that belong to the user
  */
 const urlsForUser = (id) => {
-  let userURLS = [];
+  let userURLS = {};
   for (let urlId in urlDatabase) {
 
     // Check if current user has urls in the database
     if (urlDatabase[urlId].userID === id) {
-      userURLS.push(urlDatabase[urlId].longURL);
+      userURLS[urlId] = urlDatabase[urlId];
     }
   }
+  console.log("________________USERURLS: ", userURLS)
   return userURLS;
 };
 
@@ -160,35 +161,48 @@ app.get('/urls', (req, res) => {
   // If user is logged in, show the URLs
   const userURLS = urlsForUser(currentUserId);
   console.log(userURLS)
-  const templateVars = { urls: urlDatabase, currentUser, userURLS };
+  // Pass only the user's urls to the template
+  const templateVars = { urls: userURLS, currentUser, };
   res.render('urls_index', templateVars);
 });
 
 // Route to create a new URL, renders an HTML template form to submit a new URL
 app.get('/urls/new', (req, res) => {
-  const templateVars = { user: userDatabase[req.cookies.user_id] };
-  if (!req.cookies.user_id) return res.redirect('/login')
+  // Store current user information
+  const currentUserId = req.cookies.user_id;
+  const currentUser = userDatabase[currentUserId];
+
+  const templateVars = { currentUser };
+
+  // If current user doesn't exist in the DB, redirect to /login path
+  if (!currentUser) return res.redirect('/login')
+
   res.render('urls_new', templateVars);
 });
 
 // Route to post a new URL and store the data in the database, then redirect to the specific URL for the ID
 app.post('/urls', (req, res) => {
+  // Store current user information
+  const currentUserId = req.cookies.user_id;
+
   // Handle case where user is not logged in
-  if (!req.cookies.user_id) return res.status(403).send('Must be registered and logged in to manipulate URLs.')
+  if (!currentUserId) return res.status(403).send('Must be registered and logged in to manipulate URLs.')
 
   // Store post data
   const newId = generateRandomID();
   const newLongURL = req.body.longURL;
 
   // Update urls Database
-  urlDatabase[newId] = {longURL: newLongURL, userID: req.cookies.user_id };
+  urlDatabase[newId] = {longURL: newLongURL, userID: currentUserId };
   console.log(urlDatabase)
   res.redirect(`/urls/${newId}`);
 });
 
 // Route to redirect any shortURl (/u/:id) to its longURL
 app.get('/u/:id', (req, res) => {
-  const longURL = urlDatabase[req.params.id].longURL;
+  // Lookup URLs for current user
+  const currentUserURLS = userURLS(req.cookies.user_id);
+  const longURL = currentUserURLS.longURL[req.params.id];
 
   if (!longURL) return res.status(404).send('That URL doesn\'t exist.');
 
@@ -197,12 +211,19 @@ app.get('/u/:id', (req, res) => {
 
 // Dynamic route to display a specific URL's details based on the id provided
 app.get('/urls/:id', (req, res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, user: userDatabase[req.cookies.user_id] };
+  // Store current user information
+  const currentUserId = req.cookies.user_id;
+  const currentUser = userDatabase[currentUserId];
+  console.log("Req.params.id: ", req.params.id); // the url id
+  console.log('cookie.id: ', req.cookies.user_id)
+
+  // Store request body information
+  const urlId = req.params.id;
 
   // Handle case where user is not logged in
-  if (!req.cookies.user_id) return res.status(403).send('Must be registered and logged in to manipulate URLs.')
-
-
+  if (!currentUser) return res.status(403).send('Must be registered and logged in to manipulate URLs.')
+    console.log("req.parazms.id", urlId)
+  const templateVars = { id: urlId, longURL: urlDatabase[urlId].longURL, currentUser };
   res.render('urls_show', templateVars);
 });
 
@@ -219,10 +240,23 @@ app.post('/urls/:id/delete', (req, res) => {
 
 // Dynamic route to update a URL and redirect to the URLs page
 app.post('/urls/:id', (req, res) => {
-  const currentID = req.body.currentID; // Grab data from hidden form named 'currentID'
+  // Store current user information
+  const currentUserId = req.cookies.user_id;
+  const currentUser = userDatabase[currentUserId]
+
+  // Store current /urls/:id information
+  console.log("--------------")
+  console.log("req.params.id inside /urls/:id      ", req.params.id)
+  console.log("req.params.body inside /urls/:id      ", req.params.body)
+  const currentUrlID = req.body.currentUrlId; // Grab data from hidden form named 'currentUrlId'
   const updatedURL = req.body.newURL; // Grab data from form named 'newURL'
-  urlDatabase[currentID] = updatedURL; // update db
-  const templateVars = { id: currentID, longURL: updatedURL, user: userDatabase[req.cookies.user_id] };
+
+  // Update database
+  urlDatabase[currentUrlID].longURL = updatedURL;
+  urlDatabase[currentUrlID].userID = currentUserId;
+
+  // Pass new data into template
+  const templateVars = { id: currentUrlID, longURL: updatedURL, currentUser };
   res.render('urls_show', templateVars);
 });
 
