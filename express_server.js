@@ -22,6 +22,7 @@ const app = express();
 
 // Global Variables
 let frequencyTracker = 0; // Tracks number of visits to /urls/:id
+let uniqueFreqTracker = 0; // Tracks number of UNIQUE visits to /urls/:id
 
 // View Engine
 app.set('view engine', 'ejs'); // set ejs as view engine
@@ -219,16 +220,24 @@ app.get('/urls/:id', (req, res) => {
   // Check if current user owns the URL they are trying to access
   if (urlDatabase[currentUrlID].userID !== currentUserId) return res.status(403).send('You do not have permission to view this URL');
 
-  // Frequency tracker - number of time link has been visited
-  frequencyTracker += 1; // Increment the tracker
+  // Increment the frequency tracker - number of time link has been visited
+  frequencyTracker += 1;
+
+  // Check if current user has visited the path before
+  if (!req.session.vistitedPath) {
+    req.session.vistitedPath = generateRandomID(); // Create unique ID for cookie to indiciate the site has been visited before
+    uniqueFreqTracker += 1;
+  };
 
   // Pass information to template
   const templateVars = {
     id: currentUrlID, // the URL id
     longURL: urlDatabase[currentUrlID].longURL, // long URL associated with URL id
     totalVisits: frequencyTracker, // cookieTracker array
+    uniqueVisits: uniqueFreqTracker, // store number of unique visitors
     currentUser
   };
+  console.log('templateVars.uniqueVisits: ', templateVars.uniqueVisits)
   res.render('urls_show', templateVars);
 });
 
