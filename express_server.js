@@ -20,6 +20,9 @@ const { urlDatabase, userDatabase } = require('./databases');
 // Constants
 const app = express();
 
+// Global Variables
+let frequencyTracker = 0; // Tracks number of visits to /urls/:id
+
 // View Engine
 app.set('view engine', 'ejs'); // set ejs as view engine
 
@@ -216,8 +219,16 @@ app.get('/urls/:id', (req, res) => {
   // Check if current user owns the URL they are trying to access
   if (urlDatabase[currentUrlID].userID !== currentUserId) return res.status(403).send('You do not have permission to view this URL');
 
+  // Frequency tracker - number of time link has been visited
+  frequencyTracker += 1; // Increment the tracker
+
   // Pass information to template
-  const templateVars = { id: currentUrlID, longURL: urlDatabase[currentUrlID].longURL, currentUser };
+  const templateVars = {
+    id: currentUrlID, // the URL id
+    longURL: urlDatabase[currentUrlID].longURL, // long URL associated with URL id
+    totalVisits: frequencyTracker, // cookieTracker array
+    currentUser
+  };
   res.render('urls_show', templateVars);
 });
 
@@ -242,7 +253,6 @@ app.delete('/urls/:id/delete', (req, res) => {
   delete urlDatabase[urlToDelete];
   res.redirect('/urls');
 });
-
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
