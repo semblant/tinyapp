@@ -17,27 +17,26 @@
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
-    </div>
-    <div class="login information">
+      </div>
       <div>
         <!-- Check if current user exists in database -->
-          <% if (currentUser) { %>
-          <form method="POST" action="/logout">
-            <!-- Display email-->
-            <label>Logged in as: <%= currentUser.email %>
-              <input type="submit" value="Logout">
-            </label>
-          </form>
-          <form method="GET" action= "/urls">
-            <a class="nav-item nav-link" href="/urls">Register</a>
-            <a class="nav-item nav-link" href="/urls">Login</a>
-          </form>
-          <!-- If user doesn't exist display register and login links -->
-          <% } else { %>
-            <a class="nav-item nav-link" href="/register">Register</a>
-            <a class="nav-item nav-link" href="/login">Login</a>
-          <% } %>
+        <% if (currentUser) { %>
+          <div class="navbar-nav">
+            <form method="GET" action= "/urls">
+            </form>
+             <!-- Display email-->
+            <span class="navbar-text text-white">Logged in as: <%= currentUser.email %></p>
+            <form class="form-inline" method="POST" action="/logout">
+                <button class="btn btn-outline-light btn-sm mr-2">Logout</button>
+            </form>
+          </div>
+        <!-- If user doesn't exist display register and login links -->
+        <% } else { %>
+          <div class="navbar-nav">
+          <a class="nav-item nav-link" href="/register">Register</a>
+          <a class="nav-item nav-link" href="/login">Login</a>
+        <% } %>
+      </div>
         </div>
-    </div>
   </nav>
 </header>

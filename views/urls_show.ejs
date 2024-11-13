@@ -22,13 +22,15 @@
           Short URL ID: <a href="<%= longURL %>"><%= id %></a>
         </p>
         <hr>
-        <p>
-          Total visits to <%= id %>: <%= totalVisits %> <br>
-          Unique visits to <%= id %>: <%= uniqueVisits %> <br>
-          List of Visits: <br>
+        <div class="details" style="text-align: left;">
+          <p>Created: <%= timeStamps[0] %></p>
+          <p>Total visits to <%= id %>: <%= totalVisits %></p>
+          <p>Unique visits to <%= id %>: <%= uniqueVisits %></p>
+          <p>List of Visits:</p>
           <% for (let time of timeStamps) { %>
-            <li><%= time %></li>
+            <ol><%= time %></ol>
           <% } %>
+        </div>
           <hr>
           <h4 color="grey">EDIT</h4>
           <!-- Form to update a URL using HTTP verb PUT -->

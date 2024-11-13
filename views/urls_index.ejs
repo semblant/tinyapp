@@ -22,7 +22,7 @@
       <h3>My URLs</h3>
       <!-- If current user is not logged in, show message only-->
       <% if (!currentUser) { %>
-        <p>Please login/Register to see your URLS</p>
+        <p>Please Login/Register for TinyApp to start adding URLs!</p>
       <% }  else { %>
       <!-- If current user is logged in, show table of URLs-->
       <table class="table">
@@ -30,6 +30,9 @@
           <tr>
             <th scope="col">Short URL ID</th>
             <th scope="col">Long URL</th>
+            <th scope="col">Date Created</th>
+            <th scope="col">Total Visitors</th>
+            <th scope="col">Unique Visitors</th>
             <th scope="col">Delete</th>
             <th scope="col">Edit</th>
           </tr>
@@ -42,6 +45,9 @@
                 <tr>
                   <td><%= id %></td>
                   <td><%= urls[id].longURL %></td>
+                  <td><%= urls[id].timeStamps[0] %></td>
+                  <td><%= urls[id].totalVisits %></td>
+                  <td><%= urls[id].uniqueVisits %></td>
                   <td>
                     <!-- Form to delete a URL using the HTTP verb DELETE -->
                     <form method="POST" action="/urls/<%= id %>/delete?_method=DELETE">
