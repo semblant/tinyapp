@@ -20,10 +20,6 @@ const { urlDatabase, userDatabase } = require('./databases');
 // Constants
 const app = express();
 
-// Global Variables
-let frequencyTracker = 0; // Tracks number of visits to /urls/:id
-let uniqueFreqTracker = 0; // Tracks number of UNIQUE visits to /urls/:id
-let timestampTracker = [];
 // View Engine
 app.set('view engine', 'ejs'); // set ejs as view engine
 
@@ -37,14 +33,25 @@ app.use(cookieSession({
   keys: ['keys1'],
 }));
 
+
 // HTTP METHOD HANDLERS
 // Root route, redirects to /urls page
 app.get('/', (req, res) => {
+  // Check if user is logged in
+  if (!req.session.user_id) return res.redirect('/login')
+
   res.redirect('/urls');
 });
 
 // Route to get login path and render login.ejs template
 app.get('/login', (req, res) => {
+  // Store current user information
+  const currentUser = req.session.user_id;
+
+  // Check if user is logged in
+  if (currentUser) return res.redirect('/urls')
+
+  // If user is not logged in, display login page
   res.render('login');
 });
 
@@ -71,6 +78,12 @@ app.post('/login', (req, res) => {
 
 // Route to prompt user registration
 app.get('/register', (req, res) => {
+  // Store current user information
+  const currentUser = req.session.user_id;
+
+  // Check if user is logged in
+  if (currentUser) return res.redirect('/urls')
+
   res.render('register');
 });
 
@@ -103,6 +116,10 @@ app.post('/logout', (req, res) => {
   res.redirect('/login');
 });
 
+app.get('/users.json', (req, res) => {
+  res.json(userDatabase);
+});
+
 // Route to return the urlDatabase as a JSON object
 app.get('/urls.json', (req, res) => {
   res.json(urlDatabase); // converts to JSON
@@ -124,7 +141,10 @@ app.get('/urls', (req, res) => {
   const userURLS = urlsForUser(currentUserId, urlDatabase);
 
   // Pass only the user's urls to the template
-  const templateVars = { urls: userURLS, currentUser };
+  const templateVars = {
+    urls: userURLS,
+    currentUser
+  };
   res.render('urls_index', templateVars);
 });
 
@@ -155,7 +175,13 @@ app.post('/urls', (req, res) => {
   const newLongURL = req.body.longURL;
 
   // Update urls Database
-  urlDatabase[newId] = {longURL: newLongURL, userID: currentUserId };
+  urlDatabase[newId] = {
+    longURL: newLongURL,
+    userID: currentUserId,
+    totalVisits: 0, // intialize total visitor counter
+    uniqueVisits: 0, // intialize unique visitor counter
+    timeStamps: [], // intialize timeStamps array
+  };
   res.redirect(`/urls/${newId}`);
 });
 
@@ -165,10 +191,10 @@ app.get('/u/:id', (req, res) => {
   const currentUserURLS = urlsForUser(req.session.user_id, urlDatabase);
 
   // Check if the URL exists
-  if (!urlDatabase[req.params.id]) return res.status(404).send('URL does not exist!');
+  if (!urlDatabase[req.params.id]) return res.status(404).send('That URL does not exist');
 
   // Check if current user owns the URL
-  if (!currentUserURLS[req.params.id]) return res.status(403).send('You do not have access to that URL');
+  if (!currentUserURLS[req.params.id]) return res.status(403).send('You do not have permission to edit this URL');
 
   // Redirect user to URL if they own it
   res.redirect(`${currentUserURLS[req.params.id].longURL}`);
@@ -185,20 +211,27 @@ app.put('/urls/:id', (req, res) => {
   const updatedURL = req.body.newURL; // Grab data from form named 'newURL'
 
   // Check if user is logged in
-  if (!currentUserId) return res.status(403).send('Please login before requesting any changes');
-
-  // Check if URL exists
-  if (!urlDatabase[currentUrlID]) return res.status(404).send('That URL does not exist');
+  if (!currentUserId) return res.status(403).send('Must be registered and logged in to manipulate URLs.');
 
   // Check if current user owns URL
   if (urlDatabase[currentUrlID].userID !== currentUserId) return res.status(403).send('You do not have permission to edit this URL');
+
+  // Check if URL exists
+  if (!urlDatabase[currentUrlID]) return res.status(404).send('That URL does not exist');
 
   // Update database
   urlDatabase[currentUrlID].longURL = updatedURL;
   urlDatabase[currentUrlID].userID = currentUserId;
 
   // Pass new data into template
-  const templateVars = { id: currentUrlID, longURL: updatedURL, currentUser };
+  const templateVars = {
+    id: currentUrlID,
+    longURL: updatedURL,
+    totalVisits: urlDatabase[currentUrlID].totalVisits, // Pass total visits
+    uniqueVisits: urlDatabase[currentUrlID].uniqueVisits, // Pass unique visits
+    timeStamps: urlDatabase[currentUrlID].timeStamps, // pass timestamps
+    currentUser
+  };
   res.render('urls_show', templateVars);
 });
 
@@ -220,26 +253,29 @@ app.get('/urls/:id', (req, res) => {
   // Check if current user owns the URL they are trying to access
   if (urlDatabase[currentUrlID].userID !== currentUserId) return res.status(403).send('You do not have permission to view this URL');
 
-  // Increment the frequency tracker - number of time link has been visited
-  frequencyTracker += 1;
+  // Increment total visits - number of time link has been visited
+  urlDatabase[currentUrlID].totalVisits += 1;
 
-  // Check if current user has visited the path before
-  if (!req.session.vistitedPath) {
-    req.session.vistitedPath = generateRandomID(); // Create unique ID for cookie to indiciate the site has been visited before
-    uniqueFreqTracker += 1;
+  //Check if current user has visited the path before
+  if (!req.session.visitedPath) {
+    req.session.visitedPath = {}; // create cookie object to store unique paths
+  }
+  if (!req.session.visitedPath[currentUrlID] ){
+    req.session.visitedPath[currentUrlID] = true; // set cookie to true to indiciate the site has been visited before
+    urlDatabase[currentUrlID].uniqueVisits += 1;
   };
 
+  // Create timestamp cookie and add to timestamps
   req.session.visitDate = new Date().toString();
-
-  timestampTracker.push(req.session.visitDate);
+  urlDatabase[currentUrlID].timeStamps.push(req.session.visitDate);
 
   // Pass information to template
   const templateVars = {
     id: currentUrlID, // the URL id
     longURL: urlDatabase[currentUrlID].longURL, // long URL associated with URL id
-    totalVisits: frequencyTracker, // cookieTracker array
-    uniqueVisits: uniqueFreqTracker, // store number of unique visitors
-    timeStamps: timestampTracker, // store array of timestamps
+    totalVisits: urlDatabase[currentUrlID].totalVisits, // Pass total visits
+    uniqueVisits: urlDatabase[currentUrlID].uniqueVisits, // Pass unique visits
+    timeStamps: urlDatabase[currentUrlID].timeStamps, // pass timestamps
     currentUser
   };
 
