@@ -18,26 +18,26 @@ describe('#userLookup', () => {
   };
 
   it('should return a user with a valid email', () => {
-    const user = userLookup('user@example.com', testUsers);
+    const user = userLookup('user@example.com', null, testUsers);
     const expectedUserID = 'userRandomID';
-    assert.equal(user.id, expectedUserID)
+    assert.equal(user.id, expectedUserID);
   });
 
   it('should return null when the email does not exist in the database', () => {
-    const user = userLookup('example@example.com', testUsers);
+    const user = userLookup('example@example.com', null,  testUsers);
     const expectedUserID = null;
-    assert.equal(user, expectedUserID)
+    assert.equal(user, expectedUserID);
   });
 });
 
 
 describe('#urlsForUser', () => {
-    // Define Test Database
-    const urlDatabase = {
-      "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "user1" },
-      "9sm5xK": { longURL: "http://www.google.com", userID: "user2" },
-      "a1b2c3": { longURL: "http://www.example.com", userID: "user1" }
-    };
+  // Define Test Database
+  const urlDatabase = {
+    "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "user1" },
+    "9sm5xK": { longURL: "http://www.google.com", userID: "user2" },
+    "a1b2c3": { longURL: "http://www.example.com", userID: "user1" }
+  };
 
 
   it('should return urls that belong to the specified user', () => {
@@ -62,9 +62,9 @@ describe('#urlsForUser', () => {
     // Perform assertion to check if the result is an empty object
     assert.isObject(result, 'Result should be an object');
     assert.isEmpty(result, 'Result should be an empty object when no urls belong to the user');
-});
+  });
 
-it('should return an empty object if the urlDatabase is empty', () => {
+  it('should return an empty object if the urlDatabase is empty', () => {
     // Define user and empty DB
     const userId = 'user1';
     const urlDatabase = {};
@@ -74,9 +74,9 @@ it('should return an empty object if the urlDatabase is empty', () => {
     // Perform assertion to check if the result is an empty object
     assert.isObject(result, 'Result should be an object');
     assert.isEmpty(result, 'Result should be an empty object when urlDatabase is empty');
-});
+  });
 
-it('should not return any urls that do not belong to the specified user', () => {
+  it('should not return any urls that do not belong to the specified user', () => {
     const userId = 'user1';
     const result = urlsForUser(userId, urlDatabase);
 
