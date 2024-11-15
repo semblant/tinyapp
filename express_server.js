@@ -33,45 +33,11 @@ app.use(cookieSession({
   keys: ['keys1'],
 }));
 
-
 // HTTP METHOD HANDLERS
-// Root route, redirects to /urls page
+// Root route, if user logged in redirects to /urls, if user not logged in redirects to /login
 app.get('/', (req, res) => {
   // Check if user is logged in
   if (!req.session.user_id) return res.redirect('/login')
-
-  res.redirect('/urls');
-});
-
-// Route to get login path and render login.ejs template
-app.get('/login', (req, res) => {
-  // Store current user information
-  const currentUser = req.session.user_id;
-
-  // Check if user is logged in
-  if (currentUser) return res.redirect('/urls')
-
-  // If user is not logged in, display login page
-  res.render('login');
-});
-
-// Route to post user_id cookie to login page then redirect to /urls
-app.post('/login', (req, res) => {
-  // Store current user information
-  const currentUser = userLookup(req.body.email, userDatabase);
-
-  // Check if the fields are filled out properly
-  if (!req.body.email || !req.body.password) return res.status(400).send("Email and/or password fields cannot be empty");
-
-  // Check if the user doesn't exist
-  else if (currentUser === null) return res.status(404).send(`That user with email ${req.body.email} doesn't exist`);
-
-  // Check if existing hashed password matches current inputted password
-  else if (!bcrypt.compareSync(req.body.password, currentUser.password)) return res.status(403).send("Incorrect Password");
-
-  // Else find the user ID and add it as a cookie
-  const userId = currentUser.id;
-  req.session.user_id = userId; // set existing userID as cookie
 
   res.redirect('/urls');
 });
@@ -96,11 +62,11 @@ app.post('/register', (req, res) => {
   if (!req.body.email || !req.body.password) return res.status(400).send("Email and/or password fields cannot be blank.");
 
   // Check if user already exists
-  if (userLookup(req.body.email, userDatabase) !== null) return res.status(400).send(`A user with email ${req.body.email} already exists.`);
+  if (userLookup(req.body.email, null, userDatabase)) return res.status(400).send(`A user with email ${req.body.email} already exists.`);
 
   // Add user information to the database
   userDatabase[randomUserId] = {
-    id: randomUserId,
+    userID: randomUserId,
     email: req.body.email,
     password: bcrypt.hashSync(req.body.password, salt) // hash the password before storing
   };
@@ -110,35 +76,71 @@ app.post('/register', (req, res) => {
   res.redirect('/urls');
 });
 
+// Route to get login path and render login.ejs template
+app.get('/login', (req, res) => {
+  // Store current user information
+  const currentUser = req.session.user_id;
+
+  // Check if user is logged in
+  if (currentUser) return res.redirect('/urls')
+
+  // If user is not logged in, display login page
+  res.render('login');
+});
+
+// Route to post user_id cookie to login page then redirect to /urls
+app.post('/login', (req, res) => {
+  // Check if the fields are filled out properly
+  if (!req.body.email || !req.body.password) return res.status(400).send("Email and/or password fields cannot be empty");
+
+  // Store current user information
+  const currentUser = userLookup(req.body.email, null, userDatabase);
+
+  // Check if the user doesn't exist
+  if (!currentUser) return res.status(404).send(`That user with email ${req.body.email} doesn't exist`);
+
+  // Check if existing hashed password matches current inputted password
+  if (!bcrypt.compareSync(req.body.password, currentUser.password)) return res.status(403).send("Incorrect Password");
+
+  // Else find the user ID and add it as a cookie
+  const userId = currentUser.userID; // store current user ID
+  req.session.user_id = userId; // set existing userID as cookie
+
+  res.redirect('/urls'); //
+});
+
 // Route to post a logout by clearing the user_id cookie and redirecting to /urls
 app.post('/logout', (req, res) => {
   req.session = null; // Clears current user's encrypted cookie
   res.redirect('/login');
 });
 
-app.get('/users.json', (req, res) => {
-  res.json(userDatabase);
-});
-
 // Route to return the urlDatabase as a JSON object
 app.get('/urls.json', (req, res) => {
-  res.json(urlDatabase); // converts to JSON
+  // Store current user information
+  const currentUser = userLookup(null, req.session.user_id, userDatabase);
+
+  // Check if user is logged in
+  if (!currentUser) return res.status(403).send('Must be registered and logged in to manipulate URLs.');
+
+  // Store current user's URLs only
+  const userUrls = urlsForUser(currentUser.userID, urlDatabase);
+
+  // Render user's URLs as JSON
+  res.json(userUrls); // converts to JSON
 });
 
 // Route to display a list of URLs, renders an HTML template with url data
 app.get('/urls', (req, res) => {
   // Store current user information
-  const currentUserId = req.session.user_id;
-  const currentUser = userDatabase[currentUserId];
+  const currentUser = userLookup(null, req.session.user_id, userDatabase);
+  console.log(currentUser)
 
-  // Check if current user is logged in
-  if (!currentUser) {
-    // If not logged in, render a message
-    return res.render('urls_index', { urls: null, currentUser: null, userURLS: null });
-  }
+  // If current user not logged in, render page with no info
+  if (!currentUser) return res.render('urls_index', { urls: null, currentUser: null, userURLS: null });
 
   // If user is logged in, show the URLs
-  const userURLS = urlsForUser(currentUserId, urlDatabase);
+  const userURLS = urlsForUser(currentUser.userID, urlDatabase);
 
   // Pass only the user's urls to the template
   const templateVars = {
@@ -191,10 +193,10 @@ app.get('/u/:id', (req, res) => {
   const currentUserURLS = urlsForUser(req.session.user_id, urlDatabase);
 
   // Check if the URL exists
-  if (!urlDatabase[req.params.id]) return res.status(404).send('That URL does not exist');
+  if (!urlDatabase[req.params.id]) return res.status(404).send('That URL does not exist.');
 
   // Check if current user owns the URL
-  if (!currentUserURLS[req.params.id]) return res.status(403).send('You do not have permission to edit this URL');
+  if (!currentUserURLS[req.params.id]) return res.status(403).send('You do not have permission to edit this URL.');
 
   // Redirect user to URL if they own it
   res.redirect(`${currentUserURLS[req.params.id].longURL}`);
@@ -214,10 +216,10 @@ app.put('/urls/:id', (req, res) => {
   if (!currentUserId) return res.status(403).send('Must be registered and logged in to manipulate URLs.');
 
   // Check if current user owns URL
-  if (urlDatabase[currentUrlID].userID !== currentUserId) return res.status(403).send('You do not have permission to edit this URL');
+  if (urlDatabase[currentUrlID].userID !== currentUserId) return res.status(403).send('You do not have permission to edit this URL.');
 
   // Check if URL exists
-  if (!urlDatabase[currentUrlID]) return res.status(404).send('That URL does not exist');
+  if (!urlDatabase[currentUrlID]) return res.status(404).send('That URL does not exist.');
 
   // Update database
   urlDatabase[currentUrlID].longURL = updatedURL;
@@ -238,8 +240,7 @@ app.put('/urls/:id', (req, res) => {
 // Dynamic route to display a specific URL's details based on the id provided
 app.get('/urls/:id', (req, res) => {
   // Store current user information
-  const currentUserId = req.session.user_id;
-  const currentUser = userDatabase[currentUserId];
+  const currentUser = userLookup(null, req.session.user_id, userDatabase);
 
   // Store request body information
   const currentUrlID = req.params.id;
@@ -248,10 +249,10 @@ app.get('/urls/:id', (req, res) => {
   if (!currentUser) return res.status(403).send('Must be registered and logged in to manipulate URLs.');
 
   // Check if URL exists
-  if (!urlDatabase[currentUrlID]) return res.status(404).send('URL not found');
+  if (!urlDatabase[currentUrlID]) return res.status(404).send('URL not found.');
 
   // Check if current user owns the URL they are trying to access
-  if (urlDatabase[currentUrlID].userID !== currentUserId) return res.status(403).send('You do not have permission to view this URL');
+  if (urlDatabase[currentUrlID].userID !== currentUser.userID) return res.status(403).send('You do not have permission to edit this URL.');
 
   // Increment total visits - number of time link has been visited
   urlDatabase[currentUrlID].totalVisits += 1;
@@ -294,10 +295,10 @@ app.delete('/urls/:id/delete', (req, res) => {
   const urlToDelete = req.params.id;
 
   // Check if URL exists
-  if (!urlDatabase[urlToDelete]) return res.status(404).send('URL cannot be found');
+  if (!urlDatabase[urlToDelete]) return res.status(404).send('URL cannot be found.');
 
   // Check if current user owns the URL
-  if (urlDatabase[urlToDelete].userID !== currentUserId) return res.status(403).send('You do not have permission to delete that URL');
+  if (urlDatabase[urlToDelete].userID !== currentUserId) return res.status(403).send('You do not have permission to delete this URL.');
 
   // Delete the URL
   delete urlDatabase[urlToDelete];

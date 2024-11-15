@@ -9,4 +9,4 @@ module.exports = {
   PORT,
   SALT_ROUNDS,
   salt,
-}
+};
