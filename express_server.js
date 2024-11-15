@@ -37,7 +37,7 @@ app.use(cookieSession({
 // Root route, if user logged in redirects to /urls, if user not logged in redirects to /login
 app.get('/', (req, res) => {
   // Check if user is logged in
-  if (!req.session.user_id) return res.redirect('/login')
+  if (!req.session.user_id) return res.redirect('/login');
 
   res.redirect('/urls');
 });
@@ -48,7 +48,7 @@ app.get('/register', (req, res) => {
   const currentUser = req.session.user_id;
 
   // Check if user is logged in
-  if (currentUser) return res.redirect('/urls')
+  if (currentUser) return res.redirect('/urls');
 
   res.render('register');
 });
@@ -82,7 +82,7 @@ app.get('/login', (req, res) => {
   const currentUser = req.session.user_id;
 
   // Check if user is logged in
-  if (currentUser) return res.redirect('/urls')
+  if (currentUser) return res.redirect('/urls');
 
   // If user is not logged in, display login page
   res.render('login');
@@ -134,7 +134,7 @@ app.get('/urls.json', (req, res) => {
 app.get('/urls', (req, res) => {
   // Store current user information
   const currentUser = userLookup(null, req.session.user_id, userDatabase);
-  console.log(currentUser)
+  console.log(currentUser);
 
   // If current user not logged in, render page with no info
   if (!currentUser) return res.render('urls_index', { urls: null, currentUser: null, userURLS: null });
@@ -261,10 +261,10 @@ app.get('/urls/:id', (req, res) => {
   if (!req.session.visitedPath) {
     req.session.visitedPath = {}; // create cookie object to store unique paths
   }
-  if (!req.session.visitedPath[currentUrlID] ){
+  if (!req.session.visitedPath[currentUrlID]) {
     req.session.visitedPath[currentUrlID] = true; // set cookie to true to indiciate the site has been visited before
     urlDatabase[currentUrlID].uniqueVisits += 1;
-  };
+  }
 
   // Create timestamp cookie and add to timestamps
   req.session.visitDate = new Date().toString();

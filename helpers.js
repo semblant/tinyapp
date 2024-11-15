@@ -22,7 +22,7 @@ const userLookup = (userEmail, id, database) => {
   if (id) {
     for (const user in database) {
       // Return user object once found
-      console.log('inside userID userlookup:', user)
+      console.log('inside userID userlookup:', user);
       if (database[user].userID === id) {
         return database[user];
       }
@@ -59,14 +59,9 @@ const generateRandomID = () => {
   return Math.random().toString(36).substring(6);
 };
 
-const authenticateUser = (res, req, id) => {
-  if (!id) return res.status(403).send('Must be registered and logged in to Manipulate URLS.')
-  return
-};
 
 module.exports = {
   userLookup,
   urlsForUser,
   generateRandomID,
-  authenticateUser,
 };
